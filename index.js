@@ -21,11 +21,9 @@ const cZRX = { cName: 'cZRX', name: '0x' };
 const ALL_COINS = [cAAVE, cFEI, cLINK, cMKR, cETH, cSUSHI, cTUSD, cUSDP, cBAT, cYFI, cCOMP, cDAI, cREP, cSAI, cUNI, cUSDC, cUSDT, cWBTC, cZRX];
 
 const express = require('express');
-var cors = require('cors');
 const Compound = require('@compound-finance/compound-js');
 const app = express();
-const axios =require('axios');
-app.use(cors());
+const axios = require('axios');
 
 app.get('/supplyRates', (async (req, res) => {
     var allRates = await Compound.api.cToken();
