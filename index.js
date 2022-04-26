@@ -21,9 +21,11 @@ const cZRX = { cName: 'cZRX', name: '0x' };
 const ALL_COINS = [cAAVE, cFEI, cLINK, cMKR, cETH, cSUSHI, cTUSD, cUSDP, cBAT, cYFI, cCOMP, cDAI, cREP, cSAI, cUNI, cUSDC, cUSDT, cWBTC, cZRX];
 
 const express = require('express');
+var cors = require('cors');
 const Compound = require('@compound-finance/compound-js');
 const app = express();
 const axios = require('axios');
+app.use(cors());
 
 app.get('/supplyRates', (async (req, res) => {
     var allRates = await Compound.api.cToken();
@@ -69,14 +71,14 @@ app.get('/volatility/:token', (async (req, res) => {
 
 app.get('/ethPrice', (async (req, res) => {
     axios.get(`https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=USD`).then(result => {
-            if (result.data) {
-                res.json(result.data);
-            }
-            else {
-                //Error
-                console.error('Unable to retreive ETH rate.');
-            }
-        })
+        if (result.data) {
+            res.json(result.data);
+        }
+        else {
+            //Error
+            console.error('Unable to retreive ETH rate.');
+        }
+    })
 }));
 
 
