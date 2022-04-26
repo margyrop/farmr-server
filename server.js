@@ -24,6 +24,7 @@ const express = require('express');
 var cors = require('cors');
 const Compound = require('@compound-finance/compound-js');
 const app = express();
+const axios =require('axios');
 app.use(cors());
 
 app.get('/supplyRates', (async (req, res) => {
@@ -67,6 +68,18 @@ app.get('/volatility/:token', (async (req, res) => {
     }, 0) / prices.length;
     var standardDeviation = Math.sqrt(varience);
     res.json(standardDeviation / parseFloat(prices[prices.length - 1].price.value));
+}));
+
+app.get('/ethPrice', (async (req, res) => {
+    axios.get(`https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=USD`).then(result => {
+            if (result.data) {
+                res.json(result.data);
+            }
+            else {
+                //Error
+                console.error('Unable to retreive ETH rate.');
+            }
+        })
 }));
 
 
