@@ -37,13 +37,13 @@ app.get('/supplyRates', (async (req, res) => {
             borrowRate: rate.borrow_rate.value,
             collateralFactor: rate.collateral_factor.value,
             underlyingPrice: rate.underlying_price.value,
-            volitility: 0
+            volatility: 0
         };
     });
     res.json(ret);
 }));
 
-app.get('/volitility/:token', (async (req, res) => {
+app.get('/volatility/:token', (async (req, res) => {
     const marketData = await Compound.api.marketHistory({
         "asset": Compound.util.getAddress(req.params.token),
         "min_block_timestamp": Math.ceil(new Date().getTime() / 1000) - 1000000,
