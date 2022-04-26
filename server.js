@@ -31,6 +31,7 @@ app.get('/supplyRates', (async (req, res) => {
     var allRates = await Compound.api.cToken();
     allRates = allRates.cToken;
     var ret = allRates.map(function (rate) {
+        console.log(rate);
         return {
             asset: rate.underlying_symbol,
             supplyRate: rate.supply_rate.value,
@@ -38,7 +39,8 @@ app.get('/supplyRates', (async (req, res) => {
             borrowRate: rate.borrow_rate.value,
             collateralFactor: rate.collateral_factor.value,
             underlyingPrice: rate.underlying_price.value,
-            volatility: 0
+            volatility: 0,
+            underlyingSymbol: rate.underlying_symbol
         };
     });
     res.json(ret);
@@ -59,9 +61,6 @@ app.get('/volatility/:token', (async (req, res) => {
     var mean = prices.reduce((partialSum, a) => {
         return partialSum + parseFloat(a.price.value)
     }, 0) / prices.length;
-    console.log(prices[0]);
-    console.log(prices[5]);
-    console.log(prices[9]);
     var squaredDeviations = prices.map((data) => Math.pow(parseFloat(data.price.value) - mean, 2));
     var varience = squaredDeviations.reduce((partialSum, a) => {
         return partialSum + a
