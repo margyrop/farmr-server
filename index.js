@@ -21,6 +21,9 @@ const cZRX = { cName: 'cZRX', name: '0x' };
 const ALL_COINS = [cAAVE, cFEI, cLINK, cMKR, cETH, cSUSHI, cTUSD, cUSDP, cBAT, cYFI, cCOMP, cDAI, cREP, cSAI, cUNI, cUSDC, cUSDT, cWBTC, cZRX];
 
 const express = require('express');
+var bodyParser = require('body-parser')
+// create application/json parser
+var jsonParser = bodyParser.json()
 var cors = require('cors');
 const Compound = require('@compound-finance/compound-js');
 const app = express();
@@ -31,7 +34,6 @@ app.get('/supplyRates', (async (req, res) => {
     var allRates = await Compound.api.cToken();
     allRates = allRates.cToken;
     var ret = allRates.map(function (rate) {
-        console.log(rate);
         return {
             asset: rate.underlying_symbol,
             supplyRate: rate.supply_rate.value,
@@ -46,27 +48,39 @@ app.get('/supplyRates', (async (req, res) => {
     res.json(ret);
 }));
 
-app.get('/volatility/:token', (async (req, res) => {
-    const marketData = await Compound.api.marketHistory({
-        "asset": Compound.util.getAddress(req.params.token),
-        "min_block_timestamp": Math.ceil(new Date().getTime() / 1000) - 1000000,
-        "max_block_timestamp": Math.ceil(new Date().getTime() / 1000),
-        "num_buckets": 20,
-    });
-    if (marketData.prices_usd.length > 10) {
-        var prices = marketData.prices_usd.slice(-10);
-    } else {
-        var prices = marketData.prices_usd;
+app.post('/volatility', jsonParser, (async (req, res) => {
+    const rates = [];
+    for (var i = 0; i < req.body.rates.length; i++) {
+        const marketData = await Compound.api.marketHistory({
+            "asset": Compound.util.getAddress(req.body.rates[i].cName),
+            "min_block_timestamp": Math.ceil(new Date().getTime() / 1000) - 1000000,
+            "max_block_timestamp": Math.ceil(new Date().getTime() / 1000),
+            "num_buckets": 20,
+        }).catch(error => {
+            console.log(error)
+            rates.push(req.body.rates[i]);
+        });
+        if (marketData) {
+            if (marketData.prices_usd.length > 10) {
+                var prices = marketData.prices_usd.slice(-10);
+            } else {
+                var prices = marketData.prices_usd;
+            }
+            var mean = prices.reduce((partialSum, a) => {
+                return partialSum + parseFloat(a.price.value)
+            }, 0) / prices.length;
+            var squaredDeviations = prices.map((data) => Math.pow(parseFloat(data.price.value) - mean, 2));
+            var varience = squaredDeviations.reduce((partialSum, a) => {
+                return partialSum + a
+            }, 0) / prices.length;
+            var standardDeviation = Math.sqrt(varience);
+            var volatility = prices[prices.length - 1] ? (standardDeviation / parseFloat(prices[prices.length - 1].price.value)) : 0;
+            rates.push({ ...req.body.rates[i], volatility: volatility })
+        }
     }
-    var mean = prices.reduce((partialSum, a) => {
-        return partialSum + parseFloat(a.price.value)
-    }, 0) / prices.length;
-    var squaredDeviations = prices.map((data) => Math.pow(parseFloat(data.price.value) - mean, 2));
-    var varience = squaredDeviations.reduce((partialSum, a) => {
-        return partialSum + a
-    }, 0) / prices.length;
-    var standardDeviation = Math.sqrt(varience);
-    res.json(standardDeviation / parseFloat(prices[prices.length - 1].price.value));
+
+    res.json(rates);
+
 }));
 
 app.get('/ethPrice', (async (req, res) => {
